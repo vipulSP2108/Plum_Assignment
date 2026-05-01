@@ -1,0 +1,54 @@
+
+=> input to the system
+=> extract data (OCR)
+
+=> We have now the Raw data
+
+=> we will have a Validation Step (Data Cleaning & Normalization)
+   --> numeric checks for the values
+   --> Fuzzy Matching (lookup table of common medical tests to "correct" the OCR before it hits the LLM).
+   ...
+
+=> Dynamic Thresholding
+Mapping of parameters to their "normal" ranges (HOW? can we have it or ask LLM
+asking LLM will now have 3rd call that can hit the rate limiter
+... one thing we can do is if we not have that we can call LLM and the ask for it
+and update our "Knowledge Base" (Local JSON)
+so 3 layer arcitecture
+1. check in document it self if found compaire with our knowlage base if != reduce our "confidence" and take boths union as our range
+2. if not found into Document check in "Knowledge Base" (Local JSON)
+3. if not found in above both ask LLM and cache ie updated "Knowledge Base"
+compare "Raw Value" extracted by the LLM with the standard range and add FLAG
+
+
+==> Zero Hallucination Balance
+give LLM a context and then the observed paramiters.
+context: 
+
+CALL 1:
+    ask llm to behave like a doctor , 
+    the patient is having {parameters}
+    next ask to give simplified explanations 
+    for each case that i have provided and seprated by "."
+    and in same order that i have provided the input
+    use Non-Diagnostic Tone and safe tone
+
+
+now we will do this sepration behind the scenes 
+using code
+we have a "Validation Step" 
+Step 1.
+    where the system compares the extracted list
+    of tests against the raw OCR text.
+    If the AI mentions "Diabetes" but the report
+    only mentions "Hemoglobin," 
+    the system must block that output or visa versa.
+Step 2. 
+    CALL 2:
+        then we can also ask llm to
+        based on this parameters and the explanations i want you
+        tell me which are true and which are false
+
+now we have 2 calls what we can do is add an switch in a common file like env
+or the paramters where we can make call1 or 2 as FALSE OR TRUE
+I want that there we also have short disripction of what each call does
