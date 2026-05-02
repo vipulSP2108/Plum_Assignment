@@ -52,3 +52,13 @@ Step 2.
 now we have 2 calls what we can do is add an switch in a common file like env
 or the paramters where we can make call1 or 2 as FALSE OR TRUE
 I want that there we also have short disripction of what each call does
+
+
+
+
+
+
+
+
+==== New ======
+ if input states that low with some range if that range is missmatch with us but both says low then
