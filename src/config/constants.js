@@ -3,7 +3,7 @@
  * @description Global Application Master Switches and Configuration.
  */
 
-const IS_VERCEL = false; // <-- SET THIS TO TRUE BEFORE DEPLOYING TO VERCEL
+const IS_VERCEL = true; // <-- SET THIS TO TRUE BEFORE DEPLOYING TO VERCEL
 
 const APP_CONFIG = {
   // --- Environment Settings ---
