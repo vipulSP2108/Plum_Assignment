@@ -1,5 +1,6 @@
 /**
  * @module MainAPI
+ * [Hot-Reload Active]
  * @project Plum Medical Report Simplifier
  * @description Express entry point for OCR and Normalization services.
  * @author AuraDoc Style
@@ -13,10 +14,13 @@ const fs = require('fs');
 require('dotenv').config();
 
 // Service Imports
-const { normalizeTest } = require('./services/normalizer');
+const { normalizeTest } = require('./services/report_api/normalizer');
+const CONSTANTS = require('./config/constants');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+console.log(`[AuraDoc] AI System Status: ${CONSTANTS.ENABLE_AI_EXPLANATIONS ? 'ACTIVE' : 'DISABLED'}`);
 
 // --- Middleware Configuration ---
 
@@ -52,37 +56,66 @@ app.get('/', (req, res) => {
  * @consumes multipart/form-data
  */
 app.post('/process-report', upload.single('report'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-
-  const filePath = req.file.path;
+  let rawText = '';
+  let ocrConfidence = 1.0;
+  let filePath = null;
 
   try {
-    // Step 1: OCR Extraction
-    const result = await Tesseract.recognize(filePath, 'eng');
-    const rawText = result.data.text;
-    const ocrConfidence = result.data.confidence / 100;
+    if (req.file) {
+      filePath = req.file.path;
+      // Step 1: OCR Extraction
+      const result = await Tesseract.recognize(filePath, 'eng');
+      rawText = result.data.text;
+      ocrConfidence = result.data.confidence / 100;
+    } else if (req.body && req.body.text) {
+      rawText = req.body.text;
+    } else {
+      return res.status(400).json({ error: "No file or text provided" });
+    }
+
     const rawLines = rawText.split('\n').filter(line => line.trim().length > 0);
 
     // Step 2: Normalization
-    const normalizedTests = rawLines.map(line => normalizeTest(line));
-    const recognizedTests = normalizedTests.filter(t => t.status !== "unrecognized");
+    const allProcessed = rawLines.map(line => normalizeTest(line));
+    
+    // Valid tests found in KB
+    const recognizedTests = allProcessed.filter(t => t.test_id !== "unknown" && t.status !== "unrecognized");
+    
+    // Tests that require human audit (Mismatches, Unknowns, or Missing Ranges)
+    const tempRanges = allProcessed.filter(t => t.needs_review && t.status !== "unrecognized");
 
-    // Cleanup
-    fs.unlinkSync(filePath);
+    // Step 3: AI Explanations & Guardrails
+    let aiInsights = null;
+    
+    if (CONSTANTS.ENABLE_AI_EXPLANATIONS && recognizedTests.length > 0) {
+      aiInsights = await require('./services/common/ai').generateExplanations(recognizedTests);
+    }
 
-    res.json({
+    // Step 4: Final Output Determination
+    let finalOutput = {
       status: "ok",
       tests_raw: rawLines,
       tests_normalized: recognizedTests,
-      metadata: {
-        ocr_confidence: ocrConfidence,
-        tests_count: recognizedTests.length
-      }
-    });
+      temp_ranges: tempRanges, // New section for user review
+      ai_report: aiInsights,
+      metadata: { ocrConfidence, tests_count: recognizedTests.length, review_required: tempRanges.length > 0 }
+    };
+
+    if (CONSTANTS.ENABLE_RESPONSE_PARSER) {
+      const { parseFinalResponse } = require('./services/report_api/responseParser');
+      finalOutput = parseFinalResponse(recognizedTests, aiInsights, ocrConfidence);
+    }
+
+    // Cleanup
+    if (filePath && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    res.json(finalOutput);
 
   } catch (error) {
     console.error("Critical Processing Error:", error);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
     res.status(500).json({ error: "Internal server error during processing" });
   }
 });

@@ -1,117 +1,104 @@
-# Plum_Assignment
+# Plum Medical Report Simplifier (AuraDoc)
 
-## Problem
-
-### Instructions:
-Read the submission guidelines and evaluation criteria carefully for the chosen problem statement as mentioned below.
-- Submission Timeline: You have a total of 4 days to complete the assignment. The solution needs to be submitted by the 5th day from receiving the problem statement.
-
-### For Problem Statements 5-8 (Backend): AI-Powered Medical Report Simplifier
-
-#### Overview
-Build a backend service that processes medical reports (typed or scanned) and converts them into structured data along with clear, patient-friendly explanations. The system must handle OCR errors, normalize medical test data, and strictly avoid hallucinating any information not present in the input.
+A production-ready medical report simplification engine that uses OCR and AI to deliver patient-friendly, clinically accurate report summaries.
 
 ---
 
-#### Tech Stack
-- **Backend:** Node.js with Express.js
-- **OCR Engine:** Tesseract.js for robust image-to-text extraction
-- **AI Engine:** OpenAI/LLM for simplified patient explanations
-- **Fuzzy Matching:** Fuse.js for correcting medical jargon and OCR typos
-- **Containerization:** Docker for consistent deployment
-- **Validation:** Zod for strict JSON schema adherence
+## 🚀 Features
+- **Dual Input Modes:** Supports high-fidelity OCR (Images/PDFs) and direct Text Input.
+- **Modular Architecture:** Clean separation between **Common Engines** (AI, Units) and **API Specialists** (Normalizer, Parser).
+- **Two-Stage AI Pipeline:** Multi-call LLM chaining for explanation generation and zero-temperature clinical verification.
+- **Master Toggle System:** Centralized `constants.js` to enable/disable AI, Verification, and Output Formatting globally.
+- **Resilience:** Automatic fallback to "Safe Templates" if the AI engine is disabled or verification fails.
 
-#### Key Engineering Features
-1. **3-Layer Range Reconciliation:** A multi-tier logic system (Document -> Knowledge Base -> LLM Fallback) to ensure highly accurate medical reference ranges.
+---
 
-#### Project Structure
-The codebase follows a modular architecture designed for scalability and clean separation of concerns:
-
+## 📂 Project Structure
 ```text
 Plum_Assignment/
 ├── src/                # All application logic
-│   ├── services/       # Core engines (Normalizer, Units)
-│   ├── config/         # App configuration
-│   └── index.js        # Entry point
-├── data/               # Knowledge bases and static JSONs
+│   ├── services/       # Core engines logic
+│   │   ├── common/     # Reusable engines (Units, AI)
+│   │   └── report_api/ # API Specific logic (Normalizer, Parser)
+│   ├── config/         # Master constants, toggles and prompts
+│   └── index.js        # Express entry point
+├── data/               # Knowledge bases (medical_ranges.json)
 ├── uploads/            # Temporary storage for OCR processing
 ├── Dockerfile          # Container instructions
 ├── docker-compose.yml  # Deployment orchestration
-└── package.json        # Dependencies
+├── package.json        # Dependencies
+└── .gitignore          # Repository hygiene
 ```
 
-- **`src/index.js`**: Main API entry point and orchestration.
-- **`src/services/`**: Core logic including the Normalizer and Unit Conversion engines.
-- **`data/`**: Knowledge base containing standardized medical reference ranges.
-- **`uploads/`**: Ephemeral storage for processing uploaded reports.
-- **`AuraDoc`**: Standardized documentation and commenting style for high code readability.
+## 🛠️ Tech Stack
+- **Backend:** Node.js, Express.js
+- **OCR:** Tesseract.js
+- **AI Engine:** Llama-3.3 (via Groq/OpenAI-compatible API)
+- **Fuzzy Matching:** Fuse.js
+- **Containerization:** Docker & Docker Compose
 
 ---
 
----
+## 🚦 Getting Started
 
-## 🚀 Quick Start (Docker)
+### 1. Installation & Environment
+Clone the repository and create a `.env` file:
+```bash
+AI_API_KEY=your_key_here
+AI_BASE_URL=https://api.groq.com/openai/v1
+AI_MODEL=llama-3.3-70b-versatile
+```
 
-The easiest way to run the service is using Docker Compose.
-
-### 1. Build and Run
+### 2. Run with Docker
 ```bash
 docker-compose up --build
 ```
 The server will be available at `http://localhost:3000`.
 
-### 2. Test the Endpoint
-You can test the OCR and Normalization logic by uploading the provided `test_image.png`:
+---
+
+## 🧪 Testing the API
+
+### Mode A: Image Upload (OCR)
 ```bash
 curl -X POST -F "report=@test_image.png" http://localhost:3000/process-report
 ```
 
----
-
-#### Pipeline Architecture
-
-The solution should follow a 4-step pipeline:
-
----
-
-### Step 1: OCR / Text Extraction
-
-**Objective:**  
-Extract relevant medical test details from raw text or OCR output.
-
-**Responsibilities:**
-- Identify test names, values, units, and status (e.g., Low/High)
-- Handle and correct minor OCR errors (e.g., "Hemglobin" → "Hemoglobin", "Hgh" → "High")
-- Preserve original extracted lines for traceability
-
-**Input Example:**
-CBC: Hemglobin 10.2 g/dL (Low)
-WBC 11200 /uL (Hgh)
-
-**Output (JSON):**
-```json
-{
-  "tests_raw": [
-    "Hemoglobin 10.2 g/dL (Low)",
-    "WBC 11200 /uL (High)"
-  ],
-  "confidence": 0.80
-}
+### Mode B: Direct Text Input
+```bash
+curl -X POST http://localhost:3000/process-report \
+  -H "Content-Type: application/json" \
+  -d '{"text": "CBC: Hemglobin 10.2 g/dL (Low)\nWBC 11200 /uL (Hgh)"}'
 ```
 
+---
 
+## 📂 Detailed Service Breakdown
 
+### 🛠️ Common Engines (`src/services/common/`)
+*   **`ai.js`**: The high-level LLM orchestrator. It handles the two-stage chaining (Explainer & Judge) and manages communication with the AI provider.
+*   **`units.js`**: A clinical math utility that normalizes medical units (e.g., converting everything to a standard baseline for comparison).
 
-#### Submission Instructions:
-- Submit a working backend demo (local with ngrok or simple cloud instance).
-- Provide a GitHub repository containing your code.
-- Include a README.md with setup instructions, architecture, and API usage examples.
-- Provide sample curl/Postman requests to test your endpoints.
-- Submit a short screen recording showing your endpoints working with sample inputs.
+### 🏥 Medical Report API (`src/services/report_api/`)
+*   **`normalizer.js`**: The core medical engine. It uses fuzzy matching to identify tests from OCR text and reconciles report ranges with the system's authoritative knowledge base.
+*   **`responseParser.js`**: The final formatting layer. It calculates the **Normalization Confidence** score and builds the final patient-friendly JSON structure.
 
-#### Evaluation Criteria:
-- Correctness of API responses and adherence to JSON schemas.
-- Handling of both text and image inputs with OCR.
-- Implementation of guardrails and error handling.
-- Code organization, clarity, and reusability.
-- Effective use of Al for chaining and validation.
+---
+
+## 🔍 Audit & Review System
+The system uses a tagged **Reconciliation** system to ensure clinical transparency. Any test requiring human oversight is automatically moved to the `temp_ranges` bucket.
+
+| Tag | Meaning | Action |
+| --- | --- | --- |
+| `[KB]` | Used authoritative Knowledge Base range. | Verified. |
+| `[Doc]` | Used range provided in the lab report. | Verified. |
+| `[Mismatch]` | Lab range differs from Knowledge Base. | **Review Required.** |
+| `[Missing]` | Test not in KB or no range available. | **Review Required.** |
+
+---
+
+## 🛡️ Safety & Guardrails
+The system implements a **Zero-Hallucination Policy**:
+1. **The Explainer (Call 1):** Generates patient-friendly descriptions.
+2. **The Judge (Call 2):** A strict verification pass that blocks any response containing made-up tests or definitive diagnoses.
+3. **Internal Normalization:** All status flags (Low/High) are reconciled against a local knowledge base, ensuring the AI never "invents" a clinical status.

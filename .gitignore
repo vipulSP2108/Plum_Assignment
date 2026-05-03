@@ -1,0 +1,32 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+uploads/
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.test
+.env.production
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Docker
+.dockerignore
