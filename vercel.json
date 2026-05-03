@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "functions": {
+    "src/index.js": {
+      "maxDuration": 60,
+      "includeFiles": "data/eng.traineddata*"
+    }
+  },
   "builds": [
     {
       "src": "src/index.js",

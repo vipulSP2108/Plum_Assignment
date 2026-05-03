@@ -64,7 +64,10 @@ app.post('/process-report', upload.single('report'), async (req, res) => {
     if (req.file) {
       filePath = req.file.path;
       // Step 1: OCR Extraction
-      const result = await Tesseract.recognize(filePath, 'eng');
+      const result = await Tesseract.recognize(filePath, 'eng', {
+        langPath: path.join(__dirname, '../data'),
+        cachePath: CONSTANTS.UPLOAD_DIR
+      });
       rawText = result.data.text;
       ocrConfidence = result.data.confidence / 100;
     } else if (req.body && req.body.text) {
