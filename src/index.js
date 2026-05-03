@@ -25,7 +25,7 @@ console.log(`[AuraDoc] AI System Status: ${CONSTANTS.ENABLE_AI_EXPLANATIONS ? 'A
 // --- Middleware Configuration ---
 
 const upload = multer({ 
-  dest: 'uploads/',
+  dest: CONSTANTS.UPLOAD_DIR,
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|pdf/;
     const mimetype = filetypes.test(file.mimetype);
@@ -120,6 +120,10 @@ app.post('/process-report', upload.single('report'), async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`[AuraDoc] Plum Service listening on port ${port}`);
-});
+if (process.env.NODE_ENV !== 'production' && !CONSTANTS.IS_VERCEL) {
+  app.listen(port, () => {
+    console.log(`[AuraDoc] Plum Service listening on port ${port}`);
+  });
+}
+
+module.exports = app;
