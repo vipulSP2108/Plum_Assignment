@@ -1,0 +1,116 @@
+flowchart TD
+    USER(["User Request"])
+
+    subgraph IN["src/index.js"]
+        IG1{"Input Type?"}
+        IG2["Image File"]
+        IG3["Plain Text"]
+    end
+
+    subgraph OCR["Tesseract.js OCR"]
+        OC1["Read Image"]
+        OC2["Extract Text + Confidence"]
+        OC3["Delete Temp File"]
+    end
+
+    subgraph TXT["Text Path"]
+        TX1["Use Text Directly<br/>Confidence = 1.0"]
+    end
+
+    subgraph SPL["Line Splitter — src/index.js"]
+        SP1["Split by Newline"]
+        SP2["Split on Comma or Semicolon<br/>Only Before a Letter"]
+        SP3["Strip Headers like CBC:"]
+        SP4["Individual Test Lines"]
+    end
+
+    KB[("medical_ranges.json<br/>Knowledge Base")]
+
+    subgraph NRM["normalizer.js — Per Line"]
+        NA["A: Read Number<br/>Handles k, lakh, commas"]
+        NB["B: Read Unit<br/>mg/dL, g/dL, /uL..."]
+        NC["C: Read Report Range<br/>Two numbers with dash"]
+        ND["D: Clean Test Name<br/>Strip everything else"]
+        NE["E: Fuzzy Match<br/>fuse.js searches<br/>medical_ranges.json<br/>id weight 2, name weight 1"]
+        NF{"Score below 0.5?"}
+        NG["Match Found<br/>Get KB name, unit,<br/>range, description"]
+        NH["No Match<br/>Mark as Unknown"]
+        NI["F: Convert Value<br/>units.js lookup table"]
+        NJ["Convert Report Range<br/>to KB Unit"]
+        NK{"Report Has Range?"}
+        NL{"Report Range<br/>Matches KB Range?"}
+        NM["Tag: Report Range Used"]
+        NN["Tag: Mismatch<br/>needs_review = true"]
+        NO["Tag: KB Range Used"]
+        NMiss["Tag: Missing<br/>needs_review = true"]
+    end
+
+    subgraph AUD["audit.js — Mismatch Logger"]
+        AU1["Write to<br/>review_queue.json<br/>Permanent Storage"]
+    end
+
+    subgraph STAT["normalizer.js — Status"]
+        NP["G: Assign Status<br/>Low / Normal / High<br/>vs final range"]
+    end
+
+    subgraph AIP["ai.js"]
+        AI1{"Tests Found?"}
+        AI2["Build Context String"]
+        AI3["LLM Call 1<br/>Explainer"]
+        AI4{"Parsed OK?"}
+        AI5["LLM Call 2<br/>Judge"]
+        AI6{"Verdict?"}
+        AI7["Verified Safe"]
+        AI8["Hallucination<br/>Detected"]
+        AI9["Safe Fallback<br/>No LLM"]
+    end
+
+    subgraph PRS["responseParser.js"]
+        P1{"Status Unprocessed?"}
+        P2["Return Error"]
+        P3["Calc Confidence Score"]
+        P4["Format Tests"]
+        P5["Build Final JSON"]
+    end
+
+    DONE(["JSON Response to User"])
+
+    USER --> IG1
+    IG1 -->|"Image"| IG2 --> OC1 --> OC2 --> OC3 --> SP1
+    IG1 -->|"Text"| IG3 --> TX1 --> SP1
+    SP1 --> SP2 --> SP3 --> SP4
+
+    SP4 --> NA & NB & NC
+    NA & NB & NC --> ND --> NE
+
+    NE -->|"Search"| KB
+    KB -->|"Match + Score"| NF
+
+    NF -->|"Yes"| NG --> NI --> NJ --> NK
+    NF -->|"No"| NH --> NMiss
+
+    NK -->|"Yes"| NL
+    NK -->|"No"| NO
+    NL -->|"Same"| NM
+    NL -->|"Different"| NN
+
+    NN --> AU1
+    AU1 --> NP
+
+    NM --> NP
+    NO --> NP
+    NMiss --> NP
+
+    NP --> AI1
+    AI1 -->|"Yes"| AI2 --> AI3 --> AI4
+    AI1 -->|"No"| AI9
+
+    AI4 -->|"OK"| AI5 --> AI6
+    AI4 -->|"Fail"| AI9
+
+    AI6 -->|"TRUE"| AI7
+    AI6 -->|"FALSE"| AI8
+
+    AI7 & AI8 & AI9 --> P1
+    P1 -->|"Yes"| P2 --> DONE
+    P1 -->|"No"| P3 --> P4 --> P5 --> DONE

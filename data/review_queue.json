@@ -1,0 +1,74 @@
+[
+  {
+    "timestamp": "2026-05-04T00:58:02.096Z",
+    "test_id": "wbc",
+    "display_name": "White Blood Cell Count (WBC)",
+    "raw_line": "WBC 7.5 g/dL (L) 6.5-12.5",
+    "value": 7.5,
+    "unit": "g/dL",
+    "doc_range": {
+      "low": 6500,
+      "high": 12500
+    },
+    "kb_range": {
+      "low": 3500,
+      "high": 10500
+    },
+    "reconciliation": "[Mismatch] Document range differs from Knowledge Base",
+    "status": "pending_review"
+  },
+  {
+    "timestamp": "2026-05-04T00:58:02.098Z",
+    "test_id": "rbc",
+    "display_name": "Red Blood Cell Count (RBC)",
+    "raw_line": "RBC 4.2 mg/dl 180-100",
+    "value": 4.2,
+    "unit": "mg/dl",
+    "doc_range": {
+      "low": 180,
+      "high": 100
+    },
+    "kb_range": {
+      "low": 4.2,
+      "high": 6.1
+    },
+    "reconciliation": "[Mismatch] Document range differs from Knowledge Base",
+    "status": "pending_review"
+  },
+  {
+    "timestamp": "2026-05-04T00:58:02.099Z",
+    "test_id": "hemoglobin",
+    "display_name": "Hemoglobin (Hgb)",
+    "raw_line": "Hgb 13.5 mg/dl (Hgh) 6.0-1.8",
+    "value": 13.5,
+    "unit": "mg/dl",
+    "doc_range": {
+      "low": 0.006,
+      "high": 0.0018000000000000002
+    },
+    "kb_range": {
+      "low": 12,
+      "high": 17.5
+    },
+    "reconciliation": "[Mismatch] Document range differs from Knowledge Base",
+    "status": "pending_review"
+  },
+  {
+    "timestamp": "2026-05-04T01:00:06.681Z",
+    "test_id": "platelets",
+    "display_name": "Platelets (PLT)",
+    "raw_line": "elts 116000 mg/dL 180-290",
+    "value": 116000,
+    "unit": "mg/dL",
+    "doc_range": {
+      "low": 180,
+      "high": 290
+    },
+    "kb_range": {
+      "low": 150000,
+      "high": 450000
+    },
+    "reconciliation": "[Mismatch] Document range differs from Knowledge Base",
+    "status": "pending_review"
+  }
+]

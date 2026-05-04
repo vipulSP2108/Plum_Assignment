@@ -1,0 +1,64 @@
+flowchart TD
+    IN(["Raw test line input"])
+
+    subgraph A["Step A — Read Value"]
+        EV["Strip commas in numbers<br/>Handle k and lakh suffixes<br/>Parse as float"]
+    end
+
+    subgraph B["Step B — Read Unit"]
+        EU["Word boundary regex<br/>mg/dL, g/dL, /uL, mmol/L, %..."]
+    end
+
+    subgraph C["Step C — Read Report Range"]
+        ER["Find two numbers with dash<br/>e.g. 8.5-10.2<br/>Store as low and high"]
+    end
+
+    subgraph D["Step D — Clean Test Name"]
+        CL["Remove numbers, units,<br/>ranges, status words,<br/>brackets, separators"]
+    end
+
+    KB2[("medical_ranges.json<br/>15+ tests<br/>id, display_name,<br/>range, unit, description")]
+
+    subgraph E["Step E — Fuzzy Match via fuse.js"]
+        FM["Search cleaned name<br/>against medical_ranges.json"]
+        FD{"Score below 0.5?"}
+        FY["Match found<br/>Get KB name, unit, range"]
+        FN["No match<br/>Mark unknown<br/>Confidence = 0.5"]
+    end
+
+    subgraph F["Step F — Unit Conversion via units.js"]
+        UC["Convert raw value<br/>from report unit to KB unit"]
+        UR["Convert report range<br/>to KB unit also"]
+    end
+
+    subgraph G["Step G — Range Reconciliation"]
+        L1{"Report has range?"}
+        L2{"Report range<br/>matches KB range?"}
+        T1["Tag: Report Range Used<br/>needs_review = false"]
+        T2["Tag: Mismatch<br/>needs_review = true"]
+        T3["Tag: KB Range Used<br/>needs_review = false"]
+        T4["Tag: Missing<br/>needs_review = true"]
+    end
+
+    subgraph AUDIT2["audit.js — Only on Mismatch"]
+        AU["Write to review_queue.json<br/>Permanent storage"]
+    end
+
+    subgraph H["Step H — Assign Status"]
+        ST["Low / Normal / High<br/>based on normalized value<br/>vs final range"]
+    end
+
+    OUT(["Structured test object returned"])
+
+    IN --> A & B & C
+    A & B & C --> D --> E
+    E --> FM -->|"Search"| KB2
+    KB2 -->|"Match + Score"| FD
+    FD -->|"Yes"| FY --> F
+    FD -->|"No"| FN --> T4 --> ST
+    F --> UC --> UR --> L1
+    L1 -->|"Yes"| L2
+    L1 -->|"No"| T3 --> ST
+    L2 -->|"Same"| T1 --> ST
+    L2 -->|"Different"| T2 --> AU --> ST
+    ST --> OUT

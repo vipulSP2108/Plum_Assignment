@@ -1,0 +1,31 @@
+flowchart TD
+    IN(["Normalized tests<br/>from normalizer.js"])
+
+    subgraph CTX["Build Context — ai.js"]
+        BC["Name + value + unit<br/>+ range + description<br/>joined as one text block"]
+    end
+
+    subgraph C1["LLM Call 1 — Explainer<br/>EXPLAINER_TEMPLATE from prompts.js"]
+        L1["Prompt instructs:<br/>Explain simply<br/>No diagnosis<br/>Strict JSON output"]
+        L2["Response: JSON array<br/>name, status, summary, explanation"]
+        L3["Parse response<br/>Handle array or wrapper"]
+    end
+
+    subgraph C2["LLM Call 2 — Judge<br/>JUDGE_TEMPLATE from prompts.js"]
+        L4["Input: context<br/>+ Call 1 output<br/>temperature = 0"]
+        L5["Returns: TRUE or FALSE"]
+        L6{"Verdict?"}
+    end
+
+    subgraph FB["Safe Fallback — No LLM"]
+        L7["Build from test names<br/>and status values only<br/>No hallucination risk"]
+    end
+
+    PASS["Verified Safe<br/>Return to response parser"]
+    FAIL["Hallucination<br/>Return unprocessed"]
+
+    IN --> BC --> L1 --> L2 --> L3
+    L3 -->|"Parsed"| L4 --> L5 --> L6
+    L3 -->|"Failed"| L7
+    L6 -->|"TRUE"| PASS
+    L6 -->|"FALSE"| FAIL

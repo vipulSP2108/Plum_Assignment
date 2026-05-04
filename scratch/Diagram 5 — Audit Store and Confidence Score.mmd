@@ -1,0 +1,21 @@
+flowchart LR
+    subgraph AUD["audit.js — Mismatch Logger"]
+        A1{"Mismatch tag<br/>AND needs_review?"}
+        A2{"Already in<br/>review_queue.json?"}
+        A3["Append entry<br/>Permanent storage"]
+        A4["Skip"]
+        A1 -->|"Yes"| A2
+        A1 -->|"No"| A4
+        A2 -->|"New"| A3
+        A2 -->|"Duplicate"| A4
+    end
+
+    subgraph FILE["data/review_queue.json"]
+        F1["Append-only<br/>Permanent<br/>User deletes manually"]
+    end
+
+    subgraph CONF["responseParser.js"]
+        CF["Confidence =<br/>fuzzy score x 0.7<br/>+ ocrScore x 0.3"]
+    end
+
+    A3 --> FILE

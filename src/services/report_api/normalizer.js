@@ -30,7 +30,8 @@ const HEADER_BLACKLIST = ['CBC', 'REPORT', 'SAMPLE', 'PATIENT', 'DOCTOR', 'TEST'
  */
 const normalizeTest = (line) => {
   // 1. Extraction (Value, Unit, Multiplier)
-  const valueMatch = line.match(/(\d+(\.\d+)?)/);
+  const cleanLine = line.replace(/(\d),(\d)/g, '$1$2'); // Remove commas in numbers
+  const valueMatch = cleanLine.match(/(\d+(\.\d+)?)/);
   let rawValue = valueMatch ? parseFloat(valueMatch[0]) : null;
 
   if (rawValue !== null && line.toLowerCase().includes('lakh')) {
@@ -48,7 +49,8 @@ const normalizeTest = (line) => {
     docRange = { low: parseFloat(rangeMatch[1]), high: parseFloat(rangeMatch[3]) };
   }
 
-  const unitMatch = line.match(/[a-z0-9^/]{1,}\/[a-z]{1,}|%|mEq\/L|mmol\/L|mg/i);
+  const unitRegex = /\b(mg\/dL|g\/dL|mg\/L|g\/L|mEq\/L|mmol\/L|%|million\/uL|10\^3\/uL|\/uL|u\/L|k\/uL|mg|g|lakh|mcg|ug|mIU\/L)\b/i;
+  const unitMatch = line.match(unitRegex);
   const detectedUnit = unitMatch ? unitMatch[0] : null;
 
   const statusKeyword = line.match(/\(L\)|\(H\)|\(Low\)|\(High\)|\(Hgh\)|Low|High|Hgh|Normal/i);
@@ -59,11 +61,15 @@ const normalizeTest = (line) => {
   }
 
   // 3. Fuzzy Match Test Name
-  const cleanedName = line
-    .replace(/^[A-Z]{2,}:/i, '') 
-    .replace(/[0-9.]+|g\/dL|\/uL|mg\/dL|mIU\/L|mEq\/L|mmol\/L|mg|lakh|%|k\b/gi, '') 
-    .replace(/\(L\)|\(H\)|\(Low\)|\(High\)|\(Hgh\)|\(|\)|Low|High|Hgh|Normal/gi, '') 
-    .replace(/[-,:]/g, ' ') 
+  // Robust cleaning: remove everything that isn't the test name
+  let cleanedName = line
+    .replace(/^[A-Z]{2,}:/i, '') // Remove category prefixes like "CBC:"
+    .replace(/(\d+(\.\d+)?)\s*[-]\s*(\d+(\.\d+)?)/g, '') // Remove ranges like "8.5-10.2"
+    .replace(new RegExp(detectedUnit || '', 'gi'), '') // Remove the unit we found
+    .replace(/[0-9.]+/g, '') // Remove remaining numbers
+    .replace(/\(L\)|\(H\)|\(Low\)|\(High\)|\(Hgh\)|\(|\)|Low|High|Hgh|Normal/gi, '') // Remove status/brackets
+    .replace(/[-,:]/g, ' ') // Remove separators
+    .replace(/\s+/g, ' ') // Collapse spaces
     .trim();
   
   if (cleanedName.length < 2 || HEADER_BLACKLIST.includes(cleanedName.toUpperCase())) {
@@ -71,7 +77,7 @@ const normalizeTest = (line) => {
   }
 
   const searchResults = fuse.search(cleanedName);
-  const match = (searchResults.length > 0 && searchResults[0].score < 0.45) ? searchResults[0] : null;
+  const match = (searchResults.length > 0 && searchResults[0].score < 0.5) ? searchResults[0] : null;
 
   // 4. Handle "Known" vs "Unknown" Tests
   const testInfo = match ? match.item : null;
@@ -84,17 +90,28 @@ const normalizeTest = (line) => {
   }
 
   // 6. Range Reconciliation & Tagging
-  let finalRange = docRange || (testInfo ? testInfo.range : null);
+  let normalizedDocRange = null;
+  if (docRange && testInfo) {
+    normalizedDocRange = {
+      low: convertValue(docRange.low, detectedUnit, testInfo.unit),
+      high: convertValue(docRange.high, detectedUnit, testInfo.unit)
+    };
+  }
+
+  let finalRange = normalizedDocRange || (testInfo ? testInfo.range : null);
   let reconciliationNote = "";
   let needsReview = false;
 
   if (!testInfo) {
     reconciliationNote = "[Missing] Test not found in Knowledge Base";
     needsReview = true;
-  } else if (docRange && testInfo.range && (docRange.low !== testInfo.range.low || docRange.high !== testInfo.range.high)) {
+  } else if (normalizedDocRange && testInfo.range && (
+    Math.abs(normalizedDocRange.low - testInfo.range.low) > 0.01 || 
+    Math.abs(normalizedDocRange.high - testInfo.range.high) > 0.01
+  )) {
     reconciliationNote = "[Mismatch] Document range differs from Knowledge Base";
     needsReview = true;
-  } else if (docRange) {
+  } else if (normalizedDocRange) {
     reconciliationNote = "[Doc] Used Document Range";
   } else if (testInfo.range) {
     reconciliationNote = "[KB] Used Knowledge Base Range";

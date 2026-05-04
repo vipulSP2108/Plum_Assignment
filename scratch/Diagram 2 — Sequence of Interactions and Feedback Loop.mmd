@@ -1,0 +1,58 @@
+sequenceDiagram
+    actor User
+    participant API as index.js
+    participant OCR as Tesseract.js
+    participant NRM as normalizer.js
+    participant KB as medical_ranges.json
+    participant AUD as audit.js
+    participant LLM1 as LLM Explainer
+    participant LLM2 as LLM Judge
+    participant PRS as responseParser.js
+
+    User->>API: POST /process-report
+
+    alt Image uploaded
+        API->>OCR: Recognize image text
+        OCR-->>API: Raw text + confidence score
+        API->>API: Delete temp file
+    else Text sent
+        API->>API: Use body text, confidence = 1.0
+    end
+
+    Note over API: Split text into individual test lines
+
+    loop For each test line
+        API->>NRM: normalizeTest(line)
+        NRM->>NRM: Read number, unit, report range
+        NRM->>NRM: Clean test name
+        NRM->>KB: Fuzzy search cleaned name in medical_ranges.json
+        KB-->>NRM: Best match entry + similarity score
+        NRM->>NRM: Convert value and report range to KB unit via units.js
+        NRM->>NRM: Compare report range vs KB range
+        alt Ranges differ by more than 0.01
+            NRM->>AUD: logForReview — Tag is Mismatch
+            AUD->>AUD: Check for duplicate entry
+            AUD-->>NRM: Written to review_queue.json
+        else Ranges match or no report range
+            NRM->>NRM: Tag as Report Range Used or KB Range Used
+        end
+        NRM->>NRM: Assign Low / Normal / High status
+        NRM-->>API: Structured test object
+    end
+
+    Note over LLM1: LLM Call 1 — Explanation
+    API->>LLM1: Normalized test context string
+    LLM1-->>API: Summary + explanation per test
+
+    Note over LLM2: LLM Call 2 — Verification
+    API->>LLM2: Context + Call 1 output
+    LLM2-->>API: TRUE or FALSE
+
+    alt FALSE
+        API-->>User: Hallucination detected — unprocessed
+    else TRUE
+        API->>PRS: Format final response
+        PRS->>PRS: Calc confidence score
+        PRS-->>API: Final JSON
+        API-->>User: Tests, summary, explanations, confidence
+    end

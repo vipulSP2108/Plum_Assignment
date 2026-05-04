@@ -76,10 +76,28 @@ app.post('/process-report', upload.single('report'), async (req, res) => {
       return res.status(400).json({ error: "No file or text provided" });
     }
 
-    const rawLines = rawText.split('\n').filter(line => line.trim().length > 0);
+    // Step 1: Programmatic Test Extraction
+    // Split by newlines, then further split by common separators like commas/semicolons if they contain test-like patterns.
+    let rawLines = rawText.split('\n')
+      .flatMap(line => {
+        // Split by comma/semicolon ONLY if followed by a space and a letter (likely a new test name)
+        // This prevents splitting numbers like 11,200.
+        if (line.includes(',') || line.includes(';')) {
+          return line.split(/[,;]\s*(?=[a-zA-Z])/).map(s => s.trim());
+        }
+        return [line.trim()];
+      })
+      .filter(line => line.length > 0);
+
+    // Clean up lines (remove headers like CBC:, etc.)
+    rawLines = rawLines.map(line => line.replace(/^[A-Z]{2,}:/i, '').trim()).filter(line => line.length > 0);
 
     // Step 2: Normalization
     const allProcessed = rawLines.map(line => normalizeTest(line));
+    
+    // Step 2.5: Audit Logging (Store mismatches for human review)
+    const { logForReview } = require('./services/common/audit');
+    allProcessed.forEach(t => logForReview(t));
     
     // Valid tests found in KB
     const recognizedTests = allProcessed.filter(t => t.test_id !== "unknown" && t.status !== "unrecognized");
@@ -123,7 +141,7 @@ app.post('/process-report', upload.single('report'), async (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV !== 'production' && !CONSTANTS.IS_VERCEL) {
+if (!CONSTANTS.IS_VERCEL) {
   app.listen(port, () => {
     console.log(`[AuraDoc] Plum Service listening on port ${port}`);
   });
