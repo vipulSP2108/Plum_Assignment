@@ -14,7 +14,7 @@ const APP_CONFIG = {
   // --- Feature Flags ---
   ENABLE_AI_EXPLANATIONS: true, // Main AI Switch
   ENABLE_AI_VERIFICATION: true, // The "Judge" Switch
-  ENABLE_RESPONSE_PARSER: false, // Output Formatting Switch
+  ENABLE_RESPONSE_PARSER: true, // Output Formatting Switch
 
   // --- API Settings ---
   OCR_CONFIDENCE_THRESHOLD: 0.6,

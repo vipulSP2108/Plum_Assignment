@@ -4,6 +4,16 @@ A production-ready medical report simplification engine that uses OCR and AI to 
 
 ---
 
+## 📽️ Project Resources & Video Demos
+Stay updated with our project walkthroughs and tutorials:
+- **Video 1:** [AI-Powered Medical Report Simplifier API Application](https://youtu.be/GROvdMVBBqE) — Overview and Live Demo.
+- **Video 2:** [AI-Powered Medical Report Simplifier API Architecture](https://youtu.be/6IKSPyUs2eg) — Deep dive into the technical design.
+- **Video 3:** [How to Obtain a Groq API Key for LLM Integration](https://youtu.be/wmGNLv-Ft3M) — Step-by-step setup guide.
+- **Full Playlist:** [Assignment Walkthrough & Tutorials](https://www.youtube.com/playlist?list=PLmDBUKUITOzHMxqHysbSipKe1JJ7tOy6H)
+
+---
+
+
 ## 🚀 Features
 - **Dual Input Modes:** Supports high-fidelity OCR (Images/PDFs) and direct Text Input.
 - **Modular Architecture:** Clean separation between **Common Engines** (AI, Units) and **API Specialists** (Normalizer, Parser).
@@ -56,6 +66,7 @@ PORT=3000
 > 2. Log in with your account (Google/GitHub/Email).
 > 3. Click on **"API Keys"** in the sidebar.
 > 4. Click **"Create API Key"**, give it a name, and copy the value.
+> 5. For a visual guide, watch our [Groq Key Setup Tutorial](https://youtu.be/wmGNLv-Ft3M).
 
 
 ### 2. Execution Options
@@ -85,24 +96,55 @@ If you don't have Docker installed, you can run the service directly using Node.
 
 The server will be available at `http://localhost:3000`.
 
+#### Option C: Deploy to Vercel (Cloud)
+The project is pre-configured for Vercel deployment. Note that OCR processing in a serverless environment may be limited by memory/timeout.
+1. Install Vercel CLI: `npm i -g vercel`
+2. Deploy: `vercel`
+3. Remember to add your `AI_API_KEY`, `AI_BASE_URL`, and `AI_MODEL` to the Vercel Project Settings (Environment Variables).
+
 ---
 
+
+---
 
 ## 🧪 Testing the API
 
 ### Mode A: Image Upload (OCR)
+To test with a physical lab report image (PNG/JPEG/PDF):
 ```bash
-curl -X POST -F "report=@test_image.png" http://localhost:3000/process-report
+curl -X POST -F "report=@testcase/test_2sets.png" http://localhost:3000/process-report
 ```
 
 ### Mode B: Direct Text Input
+To test with raw text extracted from a report:
 ```bash
 curl -X POST http://localhost:3000/process-report \
   -H "Content-Type: application/json" \
-  -d '{"text": "CBC: Hemglobin 10.2 g/dL (Low)\nWBC 11200 /uL (Hgh)"}'
+  -d '{
+    "text": "CBC: Hemglobin 10.2 g/dL (Low)\nWBC 11200 /uL (Hgh)\nPlatelets: 250k /uL"
+  }'
 ```
 
+### Mode C: Postman Configuration
+1. **Method:** `POST`
+2. **URL:** `http://localhost:3000/process-report`
+3. **Body (Multipart/form-data):**
+   - Key: `report`, Type: `File`, Value: `[Select Image/PDF]`
+4. **Body (JSON):**
+   - Content-Type: `application/json`
+   - Body: `{"text": "Your report text here"}`
+
 ---
+
+## 📄 Assignment Specification
+This project was developed for the **SDE Intern Assignment - IIT [Summer Internship]**. It implements a robust, industry-grade medical parsing engine that prioritizes clinical accuracy and safety.
+
+**Key Requirements Met:**
+- **3-Layer Reconciliation:** Cross-references Document Ranges, Knowledge Base Ranges, and AI Verification.
+- **Zero-Hallucination Policy:** Two-stage AI pipeline (Explainer + Judge) to prevent clinical inaccuracies.
+- **High Resilience:** Seamless fallback to safe templates if AI services are unreachable.
+- **Audit Logging:** All mismatches are logged to `data/review_queue.json` for human oversight.
+
 
 ## 📂 Detailed Service Breakdown
 

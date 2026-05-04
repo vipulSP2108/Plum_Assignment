@@ -5,6 +5,7 @@
     },
     "hemoglobin": {
         "display_name": "Hemoglobin (Hgb)",
+        "category": "Hematology",
         "range": {
             "low": 12.0,
             "high": 17.5
@@ -14,6 +15,7 @@
     },
     "wbc": {
         "display_name": "White Blood Cell Count (WBC)",
+        "category": "Hematology",
         "range": {
             "low": 3500,
             "high": 10500
@@ -23,6 +25,7 @@
     },
     "platelets": {
         "display_name": "Platelets (PLT)",
+        "category": "Hematology",
         "range": {
             "low": 150000,
             "high": 450000
@@ -32,6 +35,7 @@
     },
     "rbc": {
         "display_name": "Red Blood Cell Count (RBC)",
+        "category": "Hematology",
         "range": {
             "low": 4.2,
             "high": 6.1
@@ -41,6 +45,7 @@
     },
     "hematocrit": {
         "display_name": "Hematocrit (Hct/Het)",
+        "category": "Hematology",
         "range": {
             "low": 36.0,
             "high": 50.0
@@ -50,6 +55,7 @@
     },
     "alt": {
         "display_name": "Alanine Transaminase (ALT)",
+        "category": "Liver Function",
         "range": {
             "low": 7,
             "high": 55
@@ -59,6 +65,7 @@
     },
     "ast": {
         "display_name": "Aspartate Transaminase (AST)",
+        "category": "Liver Function",
         "range": {
             "low": 8,
             "high": 48
@@ -68,6 +75,7 @@
     },
     "creatinine": {
         "display_name": "Serum Creatinine",
+        "category": "Kidney Function",
         "range": {
             "low": 0.6,
             "high": 1.3
@@ -77,6 +85,7 @@
     },
     "bun": {
         "display_name": "Blood Urea Nitrogen (BUN)",
+        "category": "Kidney Function",
         "range": {
             "low": 7,
             "high": 20
@@ -86,6 +95,7 @@
     },
     "sodium": {
         "display_name": "Sodium",
+        "category": "Electrolytes",
         "range": {
             "low": 135,
             "high": 145
@@ -95,6 +105,7 @@
     },
     "potassium": {
         "display_name": "Potassium",
+        "category": "Electrolytes",
         "range": {
             "low": 3.6,
             "high": 5.2
@@ -104,6 +115,7 @@
     },
     "calcium": {
         "display_name": "Calcium",
+        "category": "Electrolytes",
         "range": {
             "low": 8.5,
             "high": 10.2
@@ -113,6 +125,7 @@
     },
     "cholesterol": {
         "display_name": "Total Cholesterol",
+        "category": "Lipid Profile",
         "range": {
             "low": 0,
             "high": 200
@@ -122,6 +135,7 @@
     },
     "ldl": {
         "display_name": "LDL Cholesterol",
+        "category": "Lipid Profile",
         "range": {
             "low": 0,
             "high": 100
@@ -131,6 +145,7 @@
     },
     "hdl": {
         "display_name": "HDL Cholesterol",
+        "category": "Lipid Profile",
         "range": {
             "low": 40,
             "high": 100
@@ -140,6 +155,7 @@
     },
     "triglycerides": {
         "display_name": "Triglycerides",
+        "category": "Lipid Profile",
         "range": {
             "low": 0,
             "high": 150

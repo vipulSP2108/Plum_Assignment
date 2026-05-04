@@ -49,9 +49,9 @@ const normalizeTest = (line) => {
     docRange = { low: parseFloat(rangeMatch[1]), high: parseFloat(rangeMatch[3]) };
   }
 
-  const unitRegex = /\b(mg\/dL|g\/dL|mg\/L|g\/L|mEq\/L|mmol\/L|%|million\/uL|10\^3\/uL|\/uL|u\/L|k\/uL|mg|g|lakh|mcg|ug|mIU\/L)\b/i;
+  const unitRegex = /(?:\s|^)(mg\/dL|g\/dL|mg\/L|g\/L|mEq\/L|mmol\/L|%|million\/uL|10\^3\/uL|\/uL|u\/L|k\/uL|mg|g|lakh|mcg|ug|mIU\/L)(?=\s|$|[().,])/i;
   const unitMatch = line.match(unitRegex);
-  const detectedUnit = unitMatch ? unitMatch[0] : null;
+  const detectedUnit = unitMatch ? unitMatch[1] : null;
 
   const statusKeyword = line.match(/\(L\)|\(H\)|\(Low\)|\(High\)|\(Hgh\)|Low|High|Hgh|Normal/i);
 

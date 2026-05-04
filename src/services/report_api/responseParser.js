@@ -46,8 +46,8 @@ const parseFinalResponse = (tests, aiReport, ocrConfidence) => {
     status: "ok",
     tests: formattedTests,
     summary: aiReport ? aiReport.summary : "Analysis complete. Values are within standard ranges.",
-    normalization_confidence: parseFloat(finalConfidence.toFixed(2)),
-    explanations: aiReport ? aiReport.explanations : []
+    // normalization_confidence: parseFloat(finalConfidence.toFixed(2)),
+    // explanations: aiReport ? aiReport.explanations : []
   };
 };
 
