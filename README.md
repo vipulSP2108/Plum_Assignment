@@ -41,21 +41,52 @@ Plum_Assignment/
 
 ## 🚦 Getting Started
 
-### 1. Installation & Environment
-Clone the repository and create a `.env` file:
+### 1. Environment Setup
+Clone the repository and create a `.env` file in the root directory:
 ```bash
-AI_API_KEY=your_key_here
+AI_API_KEY=your_key_here # Get your key at https://console.groq.com/
 AI_BASE_URL=https://api.groq.com/openai/v1
 AI_MODEL=llama-3.3-70b-versatile
+PORT=3000
 ```
 
-### 2. Run with Docker
+> [!TIP]
+> **How to get a Groq API Key:**
+> 1. Visit the [Groq Cloud Console](https://console.groq.com/).
+> 2. Log in with your account (Google/GitHub/Email).
+> 3. Click on **"API Keys"** in the sidebar.
+> 4. Click **"Create API Key"**, give it a name, and copy the value.
+
+
+### 2. Execution Options
+
+#### Option A: Run with Docker (Recommended)
+Use Docker Compose to spin up the entire environment instantly:
 ```bash
 docker-compose up --build
 ```
 The server will be available at `http://localhost:3000`.
 
+#### Option B: Run Locally (Manual)
+If you don't have Docker installed, you can run the service directly using Node.js.
+
+**Prerequisites:**
+- Node.js (v18.x or higher)
+- npm (v9.x or higher)
+
+**Steps:**
+1. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+2. **Start the Server:**
+   - For Production: `npm start`
+   - For Development (with Hot-Reload): `npm run dev`
+
+The server will be available at `http://localhost:3000`.
+
 ---
+
 
 ## 🧪 Testing the API
 
